@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import React, { useCallback, useState } from "react";
+import { SubmitHandler, useForm } from "react-hook-form";
 
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useMutation } from "react-query";
@@ -12,9 +12,9 @@ import alertify from "alertifyjs";
 import PageHeader from "./PageHeader";
 
 const AddSchool = function () {
-  const imageTypes = ["image/png", "image/jpg", "image/jpeg"];
+  const imageTypes: string[] = ["image/png", "image/jpg", "image/jpeg"];
 
-  const schoolSchema = yup.object().shape({
+  const schoolSchema = yup.object({
     name: yup.string().required("Name is required"),
     email: yup
       .string()
@@ -29,25 +29,37 @@ const AddSchool = function () {
     password: yup.string().min(8).max(32).required("Password is required"),
     confirm_password: yup
       .string()
-      .oneOf([yup.ref("password"), null], "Password must match"),
+      .oneOf([yup.ref("password")], "Password must match")
+      .required("Confirm password is required"),
     logo: yup
       .mixed()
+      .notRequired()
       .test(
-        "required",
+        "fileType",
         "Only PNG, JPG and JPEG formats are allowed",
         (file) => {
-          if (file?.length > 0) {
-            if (imageTypes.includes(file[0]?.type)) {
-              return true;
-            } else {
-              return false;
-            }
-          } else {
-            return true;
+          if (file instanceof FileList && file.length > 0) {
+            const f = file[0];
+            return !!f && imageTypes.includes(f.type);
           }
+          return true;
         }
       ),
   });
+
+  interface SchoolFormData {
+    name: string;
+    email: string;
+    phone_number: string;
+    address: string;
+    city: string;
+    postal_code: string;
+    state: string;
+    country: string;
+    password: string;
+    confirm_password: string;
+    logo?: any;
+  }
 
   const [preview, setPreview] = useState(avatar04);
 
@@ -58,7 +70,7 @@ const AddSchool = function () {
     reset,
     setError,
     setFocus,
-  } = useForm({ resolver: yupResolver(schoolSchema) });
+  } = useForm<SchoolFormData>({ resolver: yupResolver(schoolSchema) });
 
   const {
     mutate,
@@ -67,64 +79,60 @@ const AddSchool = function () {
     isSuccess: isLoginSuccess,
     isError,
   } = useMutation({
-    mutationFn: (schoolData) => {
-      return addSchool(schoolData);
-    },
+    mutationFn: (schoolData: FormData) => addSchool(schoolData),
   });
 
-  function onSubmit(data) {
-    let formData = new FormData();
-
-    for (let param in data) {
-      if (param === "logo") {
-        if (data[param].length > 0) {
-          //Adding file in to the Form data object
-          formData.append(param, data[param][0]);
+  const onSubmit: SubmitHandler<SchoolFormData> = useCallback(
+    (data) => {
+      const formData = new FormData();
+      Object.entries(data).forEach(([key, value]) => {
+        if (key === "logo" && value instanceof FileList && value.length > 0) {
+          formData.append(key, value[0]);
+        } else {
+          formData.append(key, value as string);
         }
+      });
+      alertify.set("notifier", "position", "top-right");
+      mutate(formData, {
+        onSuccess: () => {
+          alertify.success("School created successfully!");
+          reset();
+          setPreview(avatar04);
+        },
+        onError: (err: any) => {
+          const { response } = err;
+          const errors = response?.data?.data?.errors;
+          if (errors) {
+            const firstError = Object.keys(errors).find(
+              (field) => errors[field]
+            );
+            if (firstError) setFocus(firstError as keyof SchoolFormData);
+            for (let errorKey in errors) {
+              setError(errorKey as keyof SchoolFormData, {
+                type: "server",
+                message: errors[errorKey],
+              });
+            }
+          }
+          alertify.error("Something went wrong please try again!");
+        },
+      });
+    },
+    [mutate, reset, setError, setFocus]
+  );
+
+  const handleUploadedFile = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (file && imageTypes.includes(file.type)) {
+        const urlImage = URL.createObjectURL(file);
+        setPreview(urlImage);
       } else {
-        formData.append(param, data[param]);
-      }
-    }
-
-    alertify.set("notifier", "position", "top-right");
-
-    mutate(formData, {
-      onSuccess: (responseData) => {
-        alertify.success("School created successfully!");
-        reset();
         setPreview(avatar04);
-      },
-      onError: (err) => {
-        const { response } = err;
-        const errors = response?.data?.data?.errors;
-        if (errors) {
-          const firstError = Object.keys(errors).reduce((field, a) => {
-            return !!errors[field] ? field : a;
-          }, null);
-
-          if (firstError) {
-            setFocus(firstError);
-          }
-
-          for (let errorKey in errors) {
-            setError(errorKey, { type: "server", message: errors[errorKey] });
-          }
-        }
-        alertify.error("Something went wrong please try again!");
-      },
-    });
-  }
-
-  const handleUploadedFile = (event) => {
-    const file = event.target.files[0];
-
-    if (imageTypes.includes(file?.type)) {
-      const urlImage = URL.createObjectURL(file);
-      setPreview(urlImage);
-    } else {
-      setPreview(avatar04);
-    }
-  };
+      }
+    },
+    [imageTypes]
+  );
 
   return (
     <div className="page-wrapper">
@@ -186,8 +194,8 @@ const AddSchool = function () {
                     <label>Address</label>
                     <div className="col-md-10">
                       <textarea
-                        rows="20"
-                        cols="5"
+                        rows={20}
+                        cols={5}
                         className={
                           "form-control " +
                           (errors?.address?.message ? " is-invalid" : "")
@@ -278,9 +286,7 @@ const AddSchool = function () {
                       autoComplete="off"
                       className={
                         "form-control " +
-                        (errors?.consifrm_password?.message
-                          ? " is-invalid"
-                          : "")
+                        (errors?.confirm_password?.message ? " is-invalid" : "")
                       }
                       {...register("confirm_password")}
                     />
@@ -308,7 +314,9 @@ const AddSchool = function () {
                     />
 
                     <div className="invalid-feedback">
-                      {errors?.logo?.message}
+                      {typeof errors?.logo?.message === "string"
+                        ? errors.logo.message
+                        : null}
                     </div>
                   </div>
 
