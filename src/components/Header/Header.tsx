@@ -5,22 +5,22 @@ import { logout as dispatchLogout } from "../../slices/userSlice";
 
 import { useDispatch } from "react-redux";
 
+import { useHistory } from "react-router-dom/";
 import {
-  logo,
-  logosmall,
-  headericon01,
-  headericon05,
+  avatar01,
   avatar02,
   avatar11,
-  avatar17,
   avatar13,
-  headericon04,
-  avatar01,
-  lr,
+  avatar17,
   bl,
   cn,
+  headericon01,
+  headericon04,
+  headericon05,
+  logo,
+  logosmall,
+  lr,
 } from "../imagepath";
-import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 const Header = () => {
   const dispatch = useDispatch();

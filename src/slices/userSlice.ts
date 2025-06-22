@@ -1,8 +1,8 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { authenticateSchool } from "../services/authService";
 import { Credentials, User } from "../types/authTypes";
 
-const initialState: User = {
+const initialState: Partial<User> = {
   token: null,
   name: null,
   roles: null,
@@ -27,8 +27,8 @@ const userSlice = createSlice({
   name: "userSlice",
   initialState,
   reducers: {
-    setUserDetails: function (state, data) {
-      const { token, user, roles } = data.payload;
+    setUserDetails: function (state, data: PayloadAction<Partial<User>>) {
+      const { token, roles } = data.payload;
 
       state.token = token;
       //state.user = user;

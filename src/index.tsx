@@ -18,23 +18,15 @@ import "./assets/plugins/fontawesome/css/fontawesome.min.css";
 import "../node_modules/alertifyjs/build/css/alertify.css";
 import "../node_modules/alertifyjs/build/css/themes/semantic.css";
 
-import { QueryClient, QueryClientProvider } from "react-query";
+import { QueryClientProvider } from "react-query";
 import { Provider } from "react-redux";
 import Approuter from "./approuter";
-import { logout } from "./slices/userSlice";
+import queryClient from "./services/queryClient";
 import store from "./store";
 
-const root = ReactDOM.createRoot(document.getElementById("root"));
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    onError: (error) => {
-      if (error.response.status === 401) {
-        store.dispatch(logout());
-      }
-    },
-  },
-});
+const root: ReactDOM.Root = ReactDOM.createRoot(
+  document.getElementById("root")
+);
 
 root.render(
   <React.StrictMode>

@@ -1,5 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import userReducer from "./slices/userSlice";
+import { User } from "./types/authTypes";
 
 // Load state from local storage
 const loadState = () => {
@@ -15,7 +16,7 @@ const loadState = () => {
 };
 
 // Save state to local storage
-const saveState = (state) => {
+const saveState = (state: { userReducer: Partial<User> }) => {
   try {
     const serializedState = JSON.stringify(state);
     localStorage.setItem("reduxState", serializedState);
@@ -29,7 +30,7 @@ const persistedState = loadState();
 
 const store = configureStore({
   reducer: { userReducer },
-  preloadedState: persistedState,
+  preloadedState: persistedState as { userReducer: Partial<User> },
 });
 
 store.subscribe(() => {

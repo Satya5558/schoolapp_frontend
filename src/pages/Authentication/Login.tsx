@@ -1,21 +1,23 @@
 import "owl.carousel/dist/assets/owl.carousel.css";
 import "owl.carousel/dist/assets/owl.theme.default.css";
 import React, { useState } from "react";
-import { Eye, EyeOff } from "react-feather/dist";
+import { Eye, EyeOff } from "react-feather";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { login } from "../../components/imagepath";
 
+import { AxiosError } from "axios";
 import { useMutation } from "react-query";
-import { useDispatch } from "react-redux";
 import { useHistory } from "react-router-dom";
+import { useAppDispatch } from "../../hooks/reduxToolHooks";
 import { authenticateUser } from "../../services/authService";
 import { setUserDetails } from "../../slices/userSlice";
+import { Credentials } from "../../types/authTypes";
 
 const Login = () => {
   const [passwordVisible, setPasswordVisible] = useState<boolean>(false);
 
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const history = useHistory();
 
@@ -24,7 +26,7 @@ const Login = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
+  } = useForm<Credentials>();
 
   //Use Mutation
   const {
@@ -34,12 +36,12 @@ const Login = () => {
     isSuccess: isLoginSuccess,
     isError,
   } = useMutation({
-    mutationFn: (formData) => {
+    mutationFn: (formData: Credentials) => {
       return authenticateUser(formData);
     },
   });
 
-  const onSubmit = (data) => {
+  const onSubmit = (data: Credentials) => {
     mutate(data, {
       onSuccess: (responseData) => {
         const {
@@ -62,7 +64,7 @@ const Login = () => {
     });
   };
 
-  const onError = (err) => {
+  const onError = (err: any) => {
     console.log("Error occured");
     console.log(err);
   };
@@ -85,7 +87,7 @@ const Login = () => {
                   <h1>Admin Login</h1>
 
                   {/* Form */}
-                  {error?.response?.status === 401 && (
+                  {(error as AxiosError)?.response?.status === 401 && (
                     <p>Username/password is wrong</p>
                   )}
                   <form onSubmit={handleSubmit(onSubmit, onError)}>

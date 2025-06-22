@@ -1,7 +1,7 @@
 import "owl.carousel/dist/assets/owl.carousel.css";
 import "owl.carousel/dist/assets/owl.theme.default.css";
 import React, { useState } from "react";
-import { Eye, EyeOff } from "react-feather/dist";
+import { Eye, EyeOff } from "react-feather";
 import { useForm } from "react-hook-form";
 import { Link } from "react-router-dom";
 import { login } from "../../components/imagepath";
@@ -32,7 +32,7 @@ const SchoolLogin = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm();
+  } = useForm<Credentials>();
 
   const onSubmit = async (data: Credentials) => {
     const result = await dispatch(authSchool(data));
@@ -43,7 +43,7 @@ const SchoolLogin = () => {
     }
   };
 
-  const onError = (err) => {
+  const onError = (err: any) => {
     console.log("Error occured");
     console.log(err);
   };
@@ -94,7 +94,7 @@ const SchoolLogin = () => {
                       <span className="profile-views">
                         <i className="fas fa-user-circle" />
                       </span>
-                      {errors.email && <p>{errors.email.message}</p>}
+                      {errors?.email && <p>{errors?.email?.message}</p>}
                     </div>
                     <div className="form-group">
                       <label>
